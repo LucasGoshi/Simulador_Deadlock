@@ -41,6 +41,21 @@ def processo(nome, primeiro_recurso, segundo_recurso, nome_r1, nome_r2):
     primeiro_recurso.release()
     print(f"{nome} terminou. Recursos liberados.\n")
 
+# Função separada para P3 (usa só um recurso e nunca entra em deadlock)
+def processo_simples(nome, recurso, nome_recurso):
+    print(f"{nome} → está tentando pegar {nome_recurso}")
+
+    acquired = recurso.acquire(timeout=5)
+    if not acquired:
+        print(f"{nome} não conseguiu {nome_recurso}. Saindo.\n")
+        return
+
+    print(f"{nome} pegou {nome_recurso}. Executando...\n")
+    time.sleep(2)
+
+    recurso.release()
+    print(f"{nome} terminou. Recurso liberado.\n")
+
 # Criando os processos (threads)
 P1 = threading.Thread(target=processo, args=("P1", R1, R2, "R1", "R2"))
 P2 = threading.Thread(target=processo, args=("P2", R2, R1, "R2", "R1"))
