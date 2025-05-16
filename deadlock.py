@@ -74,3 +74,45 @@ else:
 
 # Processos onde não serão deadlock
 P3.join()
+
+grafo_espera = {
+    "P1": ["P2"],  # P1 está esperando por P2
+    "P2": ["P1"],  # P2 está esperando por P1
+    "P3": []       # P3 não espera por ninguém
+}
+
+def tem_ciclo(grafo):
+    visitado = set()
+    pilha = set()
+
+    def dfs(no):
+        visitado.add(no)
+        pilha.add(no)
+        for vizinho in grafo.get(no, []):
+            if vizinho not in visitado:
+                if dfs(vizinho):
+                    return True
+            elif vizinho in pilha:
+                return True
+        pilha.remove(no)
+        return False
+
+    for no in grafo:
+        if no not in visitado:
+            if dfs(no):
+                return True
+    return False
+
+# Exemplo de uso:
+if tem_ciclo(grafo_espera):
+    print("Deadlock detectado!")
+else:
+    print("Sem deadlock.")
+
+# Suponha que P1 está esperando por R2, que está com P2
+grafo_espera["P1"] = ["P2"]
+
+# Se P2 também está esperando por R1, que está com P1
+grafo_espera["P2"] = ["P1"]
+
+# Agora, tem_ciclo(grafo_espera) retornará True (deadlock)
