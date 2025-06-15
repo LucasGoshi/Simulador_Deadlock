@@ -37,12 +37,47 @@ class Disco:
             if self.blocos[i] != self.blocos[i-1] and self.blocos[i] is not None:
                 blocos_fragmentados += 1
         return blocos_fragmentados / len(usados)
+    
+class RAM:
+    def _init_(self, total):
+        self.total = total      # Total de memória disponível (em MB)
+        self.usado = 0          # Quantidade de memória atualmente em uso
 
-# Teste individual da classe Disco
+    def alocar(self, mb):
+        """
+        Tenta alocar uma quantidade de memória (em MB).
+        Se houver espaço suficiente, aloca e retorna True.
+        Caso contrário, retorna False e exibe mensagem de erro.
+        """
+        if self.usado + mb <= self.total:
+            self.usado += mb
+            print(f"[RAM] Alocado {mb}MB. Em uso: {self.usado}MB")
+            return True
+        else:
+            print(f"[RAM] Falha ao alocar {mb}MB. Memória insuficiente.")
+            return False
+
+    def liberar(self, mb):
+        """
+        Libera uma quantidade de memória (em MB).
+        Garante que o valor não fique negativo.
+        """
+        self.usado = max(0, self.usado - mb)
+        print(f"[RAM] Liberado {mb}MB. Em uso: {self.usado}MB")
+
 if _name_ == "_main_":
-    disco = Disco(10)  # Cria um disco com 10 blocos
+    print("== Teste: Disco ==")
+    disco = Disco(10)
     for i in range(5):
-        disco.alocar(f"P{i}")  # Aloca 5 processos simulados
-    print(f"Fragmentação: {disco.fragmentacao()*100:.1f}%")  # Exibe fragmentação antes
-    disco.desfragmentar()  # Realiza desfragmentação
-    print(f"Fragmentação: {disco.fragmentacao()*100:.1f}%")  # Exibe fragmentação depois
+        disco.alocar(f"P{i}")
+    print(f"Fragmentação: {disco.fragmentacao()*100:.1f}%")
+    disco.desfragmentar()
+    print(f"Fragmentação: {disco.fragmentacao()*100:.1f}%\n")
+
+    print("== Teste: RAM ==")
+    ram = RAM(500)  # Total de 500MB disponíveis
+    ram.alocar(100)
+    ram.alocar(250)
+    ram.alocar(200)  # Deve falhar
+    ram.liberar(150)
+    ram.alocar(200)  # Agora deve funcionar
