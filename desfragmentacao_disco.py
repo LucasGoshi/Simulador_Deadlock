@@ -2,9 +2,13 @@
 # Lucas Campos Goshi, Renato, Leonardo, Guilherme, Nicolas
 
 import multiprocessing
+import random
+import time
+import threading
+
 
 class Disco:
-    def _init_(self, blocos):
+    def __init__(self, blocos):
         # Inicializa o disco com uma lista de blocos vazios (None)
         self.blocos = [None] * blocos
 
@@ -41,7 +45,7 @@ class Disco:
         return blocos_fragmentados / len(usados)
     
 class RAM:
-    def _init_(self, total):
+    def __init__(self, total):
         self.total = total      # Total de memória disponível (em MB)
         self.usado = 0          # Quantidade de memória atualmente em uso
 
@@ -74,7 +78,32 @@ def usar_cpu():
     while True:
         pass  # Executa continuamente, simulando processamento intenso
 
-if _name_ == "_main_":
+def gerar_processo(disco, ram):
+    # Gera um identificador aleatório para o processo
+    pid = random.randint(1000, 9999)
+    hd = f"P{pid}"  # Nome do processo usado no disco
+
+    # Define um uso de RAM aleatório entre 50MB e 150MB
+    ram_uso = random.randint(50, 150)
+
+    # Tenta alocar a RAM necessária
+    if ram.alocar(ram_uso):
+        # Se RAM foi alocada com sucesso, grava o processo no disco
+        disco.alocar(hd)
+
+        # Simula tempo de execução do processo entre 2 e 4 segundos
+        time.sleep(random.uniform(2, 4))
+
+        # Libera a RAM após finalização
+        ram.liberar(ram_uso)
+
+        # Mensagem de término do processo
+        print(f"[-] Processo {hd} finalizado. RAM liberada.\n")
+    else:
+        # Caso a RAM não esteja disponível, o processo falha
+        print(f"[X] Processo {hd} falhou: RAM insuficiente\n")
+
+if __name__ == "__main__":
     print("== Teste: uso da CPU ==")
     
     # Inicia um processo por núcleo disponível na máquina
@@ -83,4 +112,13 @@ if _name_ == "_main_":
         p.start()
 
     print(f"[✓] {multiprocessing.cpu_count()} processos de uso de CPU iniciados.")
-    print("[!] Pressione CTRL+C para interromper o teste.")
+    print("[!] Pressione CTRL+C para interromper o teste.")
+    
+    print("== Teste: Gerar Processos ==")
+    disco = Disco(10)
+    ram = RAM(500)
+
+    # Criar múltiplos processos (em threads)
+    for _ in range(5):
+        threading.Thread(target=gerar_processo, args=(disco, ram)).start()
+        time.sleep(1)  # pequeno intervalo entre criações
