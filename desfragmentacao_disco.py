@@ -1,6 +1,8 @@
 # Simulador Integrado: Deadlock + Disco + RAM + Fragmentacao
 # Lucas Campos Goshi, Renato, Leonardo, Guilherme, Nicolas
 
+import multiprocessing
+
 class Disco:
     def _init_(self, blocos):
         # Inicializa o disco com uma lista de blocos vazios (None)
@@ -65,19 +67,20 @@ class RAM:
         self.usado = max(0, self.usado - mb)
         print(f"[RAM] Liberado {mb}MB. Em uso: {self.usado}MB")
 
-if _name_ == "_main_":
-    print("== Teste: Disco ==")
-    disco = Disco(10)
-    for i in range(5):
-        disco.alocar(f"P{i}")
-    print(f"Fragmentação: {disco.fragmentacao()*100:.1f}%")
-    disco.desfragmentar()
-    print(f"Fragmentação: {disco.fragmentacao()*100:.1f}%\n")
+def usar_cpu():
+    """
+    Loop infinito da CPU que representa um processo que consome recursos computacionais.
+    """
+    while True:
+        pass  # Executa continuamente, simulando processamento intenso
 
-    print("== Teste: RAM ==")
-    ram = RAM(500)  # Total de 500MB disponíveis
-    ram.alocar(100)
-    ram.alocar(250)
-    ram.alocar(200)  # Deve falhar
-    ram.liberar(150)
-    ram.alocar(200)  # Agora deve funcionar
+if _name_ == "_main_":
+    print("== Teste: uso da CPU ==")
+    
+    # Inicia um processo por núcleo disponível na máquina
+    for i in range(multiprocessing.cpu_count()):
+        p = multiprocessing.Process(target=usar_cpu)
+        p.start()
+
+    print(f"[✓] {multiprocessing.cpu_count()} processos de uso de CPU iniciados.")
+    print("[!] Pressione CTRL+C para interromper o teste.")
