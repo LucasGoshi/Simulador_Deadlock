@@ -1,52 +1,48 @@
-import multiprocessing
-import threading
-import time
-import random
+# Simulador Integrado: Deadlock + Disco + RAM + Fragmentacao
+# Lucas Campos Goshi, Renato, Leonardo, Guilherme, Nicolas
 
-def fragmentar_disco(disco_virtual, disco_cheio_evento):
-    while True:
-        time.sleep(2)
-        dado = f"D{random.randint(100, 999)}"
-        indices_livres = [i for i, bloco in enumerate(disco_virtual) if bloco is None]
+class Disco:
+    def _init_(self, blocos):
+        # Inicializa o disco com uma lista de blocos vazios (None)
+        self.blocos = [None] * blocos
 
-        if indices_livres:
-            i = random.choice(indices_livres)
-            disco_virtual[i] = dado
-            print(f"[Fragmentador] Gravou {dado} na posição {i}")
+    def alocar(self, dado):
+        import random
+        # Identifica blocos livres (valores None)
+        livres = [i for i, b in enumerate(self.blocos) if b is None]
+        if livres:
+            # Escolhe uma posição livre aleatoriamente e grava o dado
+            i = random.choice(livres)
+            self.blocos[i] = dado
+            print(f"[HD] Gravado {dado} na posição {i}")
         else:
-            print("[Fragmentador] Disco cheio. Parando fragmentação.")
-            disco_cheio_evento.set()
-            break
+            print("[HD] Disco cheio")
 
-def desfragmentar_disco(disco_virtual, disco_cheio_evento, desfragmentado_evento):
-    while True:
-        time.sleep(5)
-        dados = [b for b in disco_virtual if b is not None]
+    def desfragmentar(self):
+        # Agrupa os dados ocupados para mover para o início do disco
+        ocupados = [b for b in self.blocos if b is not None]
+        # Reescreve os blocos com os dados ocupados seguidos de blocos vazios
+        for i in range(len(self.blocos)):
+            self.blocos[i] = ocupados[i] if i < len(ocupados) else None
+        print("[HD] Disco desfragmentado")
 
-        for i in range(len(disco_virtual)):
-            disco_virtual[i] = dados[i] if i < len(dados) else None
+    def fragmentacao(self):
+        # Calcula a taxa de fragmentação do disco
+        usados = [i for i in self.blocos if i is not None]
+        if not usados:
+            return 0.0  # Nenhum dado alocado
+        blocos_fragmentados = 0
+        # Conta as transições entre dados diferentes adjacentes
+        for i in range(1, len(self.blocos)):
+            if self.blocos[i] != self.blocos[i-1] and self.blocos[i] is not None:
+                blocos_fragmentados += 1
+        return blocos_fragmentados / len(usados)
 
-        print("[Desfragmentador] Disco desfragmentado.")
-        print("Estado atual:", list(disco_virtual))
-
-        if disco_cheio_evento.is_set() and all(b is not None for b in disco_virtual):
-            print("[Desfragmentador] Finalizado. Disco 100% cheio e desfragmentado.\n")
-            desfragmentado_evento.set()
-            break
-
+# Teste individual da classe Disco
 if _name_ == "_main_":
-    multiprocessing.freeze_support()
-    manager = multiprocessing.Manager()
-    disco_virtual = manager.list([None] * 20)
-
-    disco_cheio_evento = multiprocessing.Event()
-    desfragmentado_evento = multiprocessing.Event()
-
-    fragmentador = threading.Thread(target=fragmentar_disco, args=(disco_virtual, disco_cheio_evento))
-    desfragmentador = threading.Thread(target=desfragmentar_disco, args=(disco_virtual, disco_cheio_evento, desfragmentado_evento))
-
-    fragmentador.start()
-    desfragmentador.start()
-
-    desfragmentado_evento.wait()
-    print("Simulação concluída.")
+    disco = Disco(10)  # Cria um disco com 10 blocos
+    for i in range(5):
+        disco.alocar(f"P{i}")  # Aloca 5 processos simulados
+    print(f"Fragmentação: {disco.fragmentacao()*100:.1f}%")  # Exibe fragmentação antes
+    disco.desfragmentar()  # Realiza desfragmentação
+    print(f"Fragmentação: {disco.fragmentacao()*100:.1f}%")  # Exibe fragmentação depois
